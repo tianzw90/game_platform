@@ -1,0 +1,9 @@
+server:
+  port: 18282
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: root
+    url: jdbc:mysql://localhost:3306/game_platform?serverTimezone=GMT%2B8&useUnicode=true&characterEncoding=utf-8&useSSL=false
