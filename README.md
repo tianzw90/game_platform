@@ -1,2 +1,6 @@
 # game_platform
-There is no description of the game platform yet.
+This project is a game platform system
+
+Various convenient gadgets mainly used for making games
+
+The current plan is to only have DNF for the time being.
