@@ -29,7 +29,7 @@ public class SysUser implements Serializable {
     private Integer sex;
 
     //所属单位组织机构ID
-    private String orgId;
+//    private String orgId;
 
     //用户图像
     private String userAvatar;

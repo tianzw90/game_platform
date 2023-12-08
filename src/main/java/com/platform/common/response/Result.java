@@ -1,4 +1,4 @@
-package com.platform.common.responseUtils;
+package com.platform.common.response;
 
 import lombok.Data;
 

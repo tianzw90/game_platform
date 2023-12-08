@@ -1,9 +1,57 @@
+# 端口号
 server:
   port: 18282
 
+# 数据库配置
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: root
     url: jdbc:mysql://localhost:3306/game_platform?serverTimezone=GMT%2B8&useUnicode=true&characterEncoding=utf-8&useSSL=false
+  data:
+    # redis配置
+    redis:
+      # redis数据库索引（默认为0）
+      database: 0
+      # redis哨兵配置
+      sentinel:
+        # 地址
+        nodes: 127.0.0.1:26379,127.0.0.1:36379
+        # 模式
+        master: myMaster
+      # redis端口
+      port: 6379
+      # redis地址
+      host: 127.0.0.1
+      # redis密码
+      password:
+
+
+
+# redis模式 0单机 1哨兵
+redis:
+  model: 0
+  pool:
+    maxIdle: 200
+    maxActive: 200
+    minIdle: 0
+    maxTotal: 1000
+    maxWaitMillis: 1000
+    minEvictableIdleTimeMillis: 300000
+    numTestsPerEvictionRun: 1024
+    timeBetweenEvictionRunsMillis: 30000
+    testOnBorrow: true
+    testWhileIdle: true
+    timeout: 5000
+
+
+
+# 过滤器白名单
+filter:
+  while-url: /sysUser/userLogin,/sysUser/userRegister
+
+# 配置swagger文档的访问路径，访问地址：http://localhost:port/swagger-ui.html
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html

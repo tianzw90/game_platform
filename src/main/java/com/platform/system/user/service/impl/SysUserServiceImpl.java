@@ -1,30 +1,38 @@
 package com.platform.system.user.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.platform.common.comstant.CommonConstant;
 import com.platform.common.encryptionUtils.Md5Util;
-import com.platform.common.responseUtils.Result;
-import com.platform.common.responseUtils.ResultUtils;
+import com.platform.common.jwt.JwtUtils;
+import com.platform.common.redis.RedisUtils;
+import com.platform.common.response.Result;
+import com.platform.common.response.ResultUtils;
+import com.platform.common.service.BaseServiceImpl;
+import com.platform.common.threadLocal.ThreadLocalUtil;
 import com.platform.system.user.dto.UserLoginDto;
 import com.platform.system.user.mapper.SysUserMapper;
 import com.platform.system.user.entity.SysUser;
 import com.platform.system.user.service.SysUserService;
-import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 
 @Service
-public class SysUserServiceImpl implements SysUserService {
+public class SysUserServiceImpl extends BaseServiceImpl<SysUserMapper, SysUser> implements SysUserService {
 
     private static final Logger logger = LoggerFactory.getLogger(SysUserServiceImpl.class);
 
     @Autowired
     private SysUserMapper userMapper;
+    @Autowired
+    private RedisUtils redisUtils;
 
     /**
      * 登录接口
@@ -40,7 +48,18 @@ public class SysUserServiceImpl implements SysUserService {
             if (!passWord.equals(user.getPassWord())) {
                 return ResultUtils.fail("密码不正确，请重新输入。");
             }
-            return ResultUtils.success("登陆成功");
+            // 登录成功 生成token 先验证redis是否已经生成过
+            String token = "";
+            String redisKey = CommonConstant.redis_key_user_login + user.getId();
+            boolean bool = redisUtils.hasKey(redisKey);
+            if (bool) {
+                token = redisUtils.get(CommonConstant.redis_key_user_login + user.getId()).toString();
+            } else {
+                token = JwtUtils.generateJwtToken(user.getId());
+                // 将生成的token存储到redis中 过期时间12小时
+                redisUtils.set(redisKey, token, CommonConstant.redis_key_user_login_expire_time);
+            }
+            return ResultUtils.success("登陆成功", token);
         }
     }
 
@@ -55,10 +74,41 @@ public class SysUserServiceImpl implements SysUserService {
         if (result.getCode().equals("0")) {
             sysUser.setPassWord(Md5Util.getMD5String(sysUser.getPassWord()));
             userMapper.insert(sysUser);
-            result = ResultUtils.success("注册成功。");
+            result = ResultUtils.success("注册成功。", null);
             result.setResult(userMapper.getByUserName(sysUser.getUserName()));
         }
         return result;
+    }
+
+    /**
+     * 获取当前人
+     * */
+    @Override
+    public Result userInfo() {
+        SysUser sysUser = ThreadLocalUtil.get();
+        if (ObjectUtils.isEmpty(sysUser)) {
+            return ResultUtils.fail("未登录，无法获取当前人信息。");
+        }
+        return ResultUtils.success("获取当前人信息成功。", sysUser);
+    }
+
+    /**
+     * 退出登录
+     * @param sysUser 要退出的用户
+     * */
+    @Override
+    public Result userLoginOut(SysUser sysUser) {
+        try {
+            // 获取userId
+            String userId = sysUser.getId();
+            // 清除redis
+            redisUtils.del(CommonConstant.redis_key_user_login + userId);
+            // 清除threadLocal
+            ThreadLocalUtil.remove();
+            return ResultUtils.success("退出登录成功。", null);
+        }catch (Exception e) {
+            return ResultUtils.fail("退出登失败。");
+        }
     }
 
     /**
@@ -102,6 +152,6 @@ public class SysUserServiceImpl implements SysUserService {
         if (!ObjectUtils.isEmpty(user)) {
             return ResultUtils.fail("邮箱已被注册。");
         }
-        return ResultUtils.success("校验通过");
+        return ResultUtils.success("校验通过", null);
     }
 }

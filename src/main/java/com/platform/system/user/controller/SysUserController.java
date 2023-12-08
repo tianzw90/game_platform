@@ -1,6 +1,6 @@
 package com.platform.system.user.controller;
 
-import com.platform.common.responseUtils.Result;
+import com.platform.common.response.Result;
 import com.platform.system.user.dto.UserLoginDto;
 import com.platform.system.user.entity.SysUser;
 import com.platform.system.user.service.SysUserService;
@@ -40,6 +40,24 @@ public class SysUserController {
     @PostMapping("userLogin")
     public Result userLogin(@RequestBody UserLoginDto userLoginDto) {
         return sysUserService.userLogin(userLoginDto);
+    }
+
+    /**
+     * 退出登录
+     * @param sysUser 要退出的用户
+     * */
+    @PostMapping("userLoginOut")
+    public Result userLoginOut(@RequestBody SysUser sysUser) {
+        return sysUserService.userLoginOut(sysUser);
+    }
+
+
+    /**
+     * 获取当前人
+     * */
+    @GetMapping("getUserInfo")
+    public Result getUserInfo() {
+        return sysUserService.userInfo();
     }
 
 
